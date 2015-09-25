@@ -32,15 +32,15 @@ int T5_ON_HOUR = 12,
 //ΟΡΙΣΜΟΣ ΧΡΟΝΟΥ ΓΙΑ ΤΟ ΑΝΑΜΑ-ΣΒΗΣΙΜΟ Τ8 ΦΩΤΙΣΜΟΥ
 //
 int T8_ON_HOUR = 13,
-    T8_ON_MINUTE = 0,
+    T8_ON_MINUTE = 30,
     T8_OFF_HOUR = 22,
-    T8_OFF_MINUTE = 0;
+    T8_OFF_MINUTE = 30;
 
 //========================================================================================================================
 //ΟΡΙΣΜΟΣ ΧΡΟΝΟΥ ΓΙΑ ΤΟ ΑΝΑΜΑ-ΣΒΗΣΙΜΟ CO2
 //
 int CO2_ON_HOUR = 12,
-    CO2_ON_MINUTE = 0,
+    CO2_ON_MINUTE = 30,
     CO2_OFF_HOUR = 21,
     CO2_OFF_MINUTE = 0;
 //========================================================================================================================
@@ -73,6 +73,29 @@ int pump_day_3;             //for LCD to Print the Date Pump ran
 int time3_H;               //for LCD to Print the Time Pump ran
 int time3_M;              //for LCD to Print the Minute Pump ran
 int time3_S;                 //for LCD to Print the Seconds Pump ran
+
+//========================================================================================================================
+//ΟΡΙΣΜΟΣ ΜΕΤΑΒΛΗΤΩΝ ΓΙΑ ΤΟ ΤΑΙΣΜΑ
+//
+// ΠΡΩΤΟ ΤΑΙΣΜΑ
+int Feed1_count = 0;
+int Feed1_delay = 2160; //1666
+int Feed1_month;           //for LCD to Print the Month Pump ran
+int Feed1_day;             //for LCD to Print the Date Pump ran
+int Feedtime1_H;               //for LCD to Print the Time Pump ran
+int Feedtime1_M;               //for LCD to Print the Minute Pump ran
+int Feedtime1_S;
+
+
+// ΔΕΥΤΕΡΟ ΤΑΙΣΜΑ
+int Feed2_count = 0;
+int Feed2_delay = 2160; //1666
+int Feed2_month;           //for LCD to Print the Month Pump ran
+int Feed2_day;             //for LCD to Print the Date Pump ran
+int Feedtime2_H;               //for LCD to Print the Time Pump ran
+int Feedtime2_M;               //for LCD to Print the Minute Pump ran
+int Feedtime2_S;                 //for LCD to Print the Seconds Pump ran
+
 
 //========================================================================================================================
 //ΟΡΙΣΜΟΣ PIN ΟΘΟΝΗΣ
@@ -122,6 +145,7 @@ int RelayHeater = 26;
 int RelayMicroPump = 27;
 int RelayKalioPump = 28;
 int RelayAlgiPump = 29;
+int RelayFeeder = 30;
 //========================================================================================================================
 // OΡΙΣΜΟΣ ΜΕΓΙΣΤΗΣ, ΤΡΕΧΟΥΣΑΣ, ΕΛΑΧΙΣΤΗΣ ΘΕΡΜΟΚΡΑΣΙΑΣ
 //
@@ -176,6 +200,7 @@ void setup() {
   digitalWrite(RelayAlgiPump, 0 );
   digitalWrite(RelayFuns, 0 );
   digitalWrite(RelayHeater, 0 );
+  digitalWrite(RelayFeeder, 0);
 
   //---( THEN set pins as outputs )----
   pinMode(RelayT8Lights,  OUTPUT);
@@ -186,6 +211,7 @@ void setup() {
   pinMode(RelayAlgiPump,  OUTPUT);
   pinMode(RelayFuns,      OUTPUT);
   pinMode(RelayHeater,    OUTPUT);
+  pinMode(RelayFeeder,    OUTPUT);
   delay(2000); //Check that all relay
 
 
@@ -229,9 +255,12 @@ void  loop() {
     {
       DosingStatus (); // ΕΛΕΓΧΟΣ ΚΑΤΑΣΤΑΣΗΣ ΛΙΠΑΝΣΗΣ
     }
+    else if (loopCounter == 3)
+    {
+      FeedingStatus (); // ΕΛΕΓΧΟΣ ΚΑΤΑΣΤΑΣΗΣ ΛΙΠΑΝΣΗΣ
+    }
 
-
-    if (loopCounter >= 2)  loopCounter = 0;
+    if (loopCounter >= 3)  loopCounter = 0;
     else                  loopCounter++;
 
     if (now.second() + 7 >= 60)
@@ -260,7 +289,7 @@ void  loop() {
 
 }
 //========================================================================================================================
-// ΕΜΦΑΝΙΣΗ ΗΜΕΡΟΜΗΝΙΑΣ -ΩΡΑΣ
+// ΕΜΦΑΝΙΣΗ ΗΜΕΡΟΜΗΝΙΑΣ - ΩΡΑΣ
 //
 void digitalDateTimeDisplay () {
   DateTime now = RTC.now(); //GRAB DATE AND TIME FROM RTC
@@ -535,18 +564,24 @@ int pump3_count = 0,  //EXELL
     EXELL_MINUTE = 25,
     EXELL_SEC = 0;
 
+
+
 //========================================================================================================================
-// ΟΡΙΣΜΟΣ ΑΡΧΙΚΗΣ ΚΑΤΑΣΤΑΣΗΣ ΧΟΡΗΓΗΣΗΣ ΛΙΠΑΣΜΑΤΩΝ
+// ΟΡΙΣΜΟΣ ΑΡΧΙΚΗΣ ΚΑΤΑΣΤΑΣΗΣ ΧΟΡΗΓΗΣΗΣ ΛΙΠΑΣΜΑΤΩΝ - ΤΡΟΦΗΣ
 //
 bool hasDosedMicros = false;
 bool hasDosedKalio = false;
 bool hasDosedEXELL = false;
+bool hasDosedFood1  = false;
+bool hasDosedFood2  = false;
 
 void ResetDosingBooleans()
 {
   hasDosedMicros = false;
   hasDosedKalio = false;
   hasDosedEXELL = false;
+  hasDosedFood1 = false;
+  hasDosedFood2  = false;
 }
 //========================================================================================================================
 // ΧΟΡΗΓΗΣΗ ΛΙΠΑΣΜΑΤΩΝ
@@ -803,13 +838,191 @@ void EXELLDosing_OFF() {
 
 }
 
+//========================================================================================================================
+// ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΤΡΟΦΗΣ
+//
+
+int FEED1_HOUR = 14,
+    FEED1_MINUTE = 15,
+    FEED1_SEC = 0;
+
+int FEED2_HOUR = 14,
+    FEED2_MINUTE = 20,
+    FEED2_SEC = 0;
+
+void FeedingStatus() {
+  DateTime now = RTC.now();
+  if (hasDosedFood1 == false && hasDosedFood2 == false) {
+
+    tft.setTextColor(YELLOW, BLACK); //set color for DOSING
+    tft.setTextSize(2);
+    tft.setCursor(0, 100);
+    tft.println("System will feed at ");
+    if (FEED1_HOUR < 0) {
+      tft.print ("0");
+      tft.print(FEED1_HOUR);
+    } else tft.print(FEED1_HOUR);
+    tft.print(":");
+    if (FEED1_MINUTE < 0) {
+      tft.print ("0");
+      tft.print(FEED1_MINUTE);
+    } else
+      tft.print(FEED1_MINUTE);
+    tft.print(" & ");
+    if (FEED2_HOUR < 0) {
+      tft.print ("0");
+      tft.print(FEED2_HOUR);
+    } else tft.print(FEED2_HOUR);
+    tft.print(":");
+    if (FEED2_MINUTE < 0) {
+      tft.print ("0");
+      tft.print(FEED2_MINUTE);
+    } else
+      tft.print(FEED2_MINUTE);
+
+  } else if (hasDosedFood1 == true && hasDosedFood2 == true ) {
+    Feed1Complete();
+    Feed2Complete();
+  }
+  else if (hasDosedFood1 == true && hasDosedFood2 == false) {
+    Feed1Complete ();
+    tft.setCursor(0, 150);
+    tft.println("System will feed at ");
+    if (FEED2_HOUR < 0) {
+      tft.print ("0");
+      tft.print(FEED2_HOUR);
+    } else tft.print(FEED2_HOUR);
+    tft.print(":");
+    if (FEED2_MINUTE < 0) {
+      tft.print ("0");
+      tft.print(FEED2_MINUTE);
+    } else
+      tft.print(FEED2_MINUTE);
+
+  }
+  //ΠΡΩΤΟ ΤΑΙΣΜΑ
+  Feed1_count ;
+  Feed1_day = now.day();
+  Feed1_month = now.month();
+  
+  //ΔΕΥΤΕΡΟ ΤΑΙΣΜΑ
+  Feed2_count ;
+  Feed2_day = now.day();
+  Feed2_month = now.month();
+  
+  //ΕΝΕΡΓΟΠΟΙΗΣΗ ΠΡΩΤΟΥ ΤΑΙΣΜΑΤΟΣ
+  
+  if (now.hour() == FEED1_HOUR && now.minute() == FEED1_MINUTE && hasDosedFood1 == false) {
+  
+    hasDosedFood1 = true;
+    Food1_ON();
+    Serial.println("Feeding1 ON");
+  
+  }  else  {
+    Food1_OFF();
+  }
+  
+  //ΕΝΕΡΓΟΠΟΙΗΣΗ ΔΕΥΤΕΡΟΥ ΤΑΙΣΜΑΤΟΣ
+  
+  if (now.hour() == FEED2_HOUR && now.minute() == FEED2_MINUTE && hasDosedFood2 == false) {
+  
+    hasDosedFood2 = true;
+    Food2_ON();
+    Serial.println("Feeding2 ON");
+  
+  }  else {
+    Food2_OFF();
+  }
+}
+
+void Food1_ON() {
+  DateTime now = RTC.now();
+  Feedtime1_H = now.hour();
+  Feedtime1_M = now.minute();
+  Feedtime1_S = now.second();
+  digitalWrite(RelayFeeder, 1);
+  Feed1_count ++;
+  delay (Feed1_delay);
+  digitalWrite(RelayFeeder, 0);
+  Feed1Complete();
+}
+
+void Feed1Complete() {
+  tft.setTextColor(GREEN, BLACK); //set color for DOSING
+  tft.setTextSize(2);
+  tft.setCursor(0, 100);
+  tft.print("Fed fish ");
+  tft.print(Feed1_count);
+  tft.println(" time(s) on ");
+  tft.print(Feed1_day);
+  tft.print(" / ");
+  tft.print(Feed1_month);
+  tft.print(" ");
+  if (Feedtime1_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime1_H);
+  } else
+    tft.print(Feedtime1_H);
+  tft.print(": ");
+  if (Feedtime1_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime1_M);
+  } else
+    tft.print(Feedtime1_M);
+  tft.print(": ");
+  if (Feedtime1_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime1_S);
+  } else  tft.println(Feedtime1_S);
+}
+
+void Food1_OFF() {
+  digitalWrite(RelayFeeder, 0);
+}
 
 
+void Food2_ON() {
+  DateTime now = RTC.now();
+  Feedtime2_H = now.hour();
+  Feedtime2_M = now.minute();
+  Feedtime2_S = now.second();
+  digitalWrite(RelayFeeder, 1);
+  Feed2_count ++;
+  delay (Feed2_delay);
+  digitalWrite(RelayFeeder, 0);
+  Feed2Complete();
+}
 
+void Feed2Complete() {
+  tft.setTextColor(GREEN, BLACK); //set color for DOSING
+  tft.setTextSize(2);
+  tft.setCursor(0, 100);
+  tft.print("Fed fish ");
+  tft.print(Feed2_count);
+  tft.println(" time(s) on ");
+  tft.print(Feed2_day);
+  tft.print(" / ");
+  tft.print(Feed2_month);
+  tft.print(" ");
+  if (Feedtime2_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime2_H);
+  } else
+    tft.print(Feedtime2_H);
+  tft.print(": ");
+  if (Feedtime2_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime2_M);
+  } else
+    tft.print(Feedtime2_M);
+  tft.print(": ");
+  if (Feedtime2_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
+    tft.print ('0');
+    tft.print(Feedtime2_S);
+  } else  tft.println(Feedtime2_S);
+}
 
-
-
-
-
-
+void Food2_OFF() {
+  digitalWrite(RelayFeeder, 0);
+}
 
