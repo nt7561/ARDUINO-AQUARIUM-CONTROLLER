@@ -551,17 +551,17 @@ void CO2_OFF() //SBHSIMO CO2
 //
 int pump1_count = 0, //ΙΧΝΟΣΤΟΙΧΕΙΑ
     MICRO_HOUR = 22,
-    MICRO_MINUTE = 46,
+    MICRO_MINUTE = 53,
     MICRO_SEC = 0;
 
 int pump2_count = 0,  //ΚΑΛΙΟ
     KALIO_HOUR = 22,
-    KALIO_MINUTE = 48,
+    KALIO_MINUTE = 53,
     KALIO_SEC = 0;
 
 int pump3_count = 0,  //EXELL
     EXELL_HOUR = 22,
-    EXELL_MINUTE = 49,
+    EXELL_MINUTE = 54,
     EXELL_SEC = 0;
 
 
@@ -740,7 +740,7 @@ void MicroDosingComplete() {
     tft.print(time1_M);
   } else
     tft.print(time1_M);
-  tft.print(": ");
+  tft.print(":");
   if (time1_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
     tft.print ('0');
     tft.print(time1_S);
@@ -843,11 +843,11 @@ void EXELLDosing_OFF() {
 //
 
 int FEED1_HOUR = 22,
-    FEED1_MINUTE = 45,
+    FEED1_MINUTE = 51,
     FEED1_SEC = 0;
 
 int FEED2_HOUR = 22,
-    FEED2_MINUTE = 47,
+    FEED2_MINUTE = 52,
     FEED2_SEC = 0;
 
 void FeedingStatus() {
@@ -855,7 +855,7 @@ void FeedingStatus() {
   if (hasDosedFood1 == false && hasDosedFood2 == false) {
 
     tft.setTextColor(YELLOW, BLACK); //set color for DOSING
-    tft.setTextSize(3);
+    tft.setTextSize(2);
     tft.setCursor(0, 100);
     tft.println("System will feed at ");
     if (FEED1_HOUR < 0) {
@@ -886,7 +886,7 @@ void FeedingStatus() {
   }
   else if (hasDosedFood1 == true && hasDosedFood2 == false) {
     Feed1Complete ();
-    tft.setTextSize(3);
+    tft.setTextSize(2);
     tft.setCursor(0, 180);
     tft.println("System will feed at ");
     if (FEED2_HOUR < 0) {
@@ -952,7 +952,7 @@ void Feed1Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
   tft.setTextSize(3);
   tft.setCursor(0, 100);
-  tft.print("Fed fish ");
+  tft.print("Fed ");
   tft.print(Feed1_count);
   tft.println(" time(s) on ");
   tft.print(Feed1_day);
@@ -998,7 +998,7 @@ void Feed2Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
   tft.setTextSize(3);
   tft.setCursor(0, 180);
-  tft.print("Fed fish ");
+  tft.print("Fed ");
   tft.print(Feed2_count);
   tft.println(" time(s) on ");
   tft.print(Feed2_day);
