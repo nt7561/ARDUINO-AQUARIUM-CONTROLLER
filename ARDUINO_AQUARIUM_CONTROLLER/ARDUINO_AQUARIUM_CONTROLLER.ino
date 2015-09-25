@@ -79,7 +79,7 @@ int time3_S;                 //for LCD to Print the Seconds Pump ran
 //
 // ΠΡΩΤΟ ΤΑΙΣΜΑ
 int Feed1_count = 0;
-int Feed1_delay = 2160; //1666
+int Feed1_delay = 7157; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
 int Feed1_month;           //for LCD to Print the Month Pump ran
 int Feed1_day;             //for LCD to Print the Date Pump ran
 int Feedtime1_H;               //for LCD to Print the Time Pump ran
@@ -89,7 +89,7 @@ int Feedtime1_S;
 
 // ΔΕΥΤΕΡΟ ΤΑΙΣΜΑ
 int Feed2_count = 0;
-int Feed2_delay = 2160; //1666
+int Feed2_delay = 7157; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
 int Feed2_month;           //for LCD to Print the Month Pump ran
 int Feed2_day;             //for LCD to Print the Date Pump ran
 int Feedtime2_H;               //for LCD to Print the Time Pump ran
@@ -858,24 +858,24 @@ void FeedingStatus() {
     tft.setTextSize(2);
     tft.setCursor(0, 100);
     tft.println("System will feed at ");
-    if (FEED1_HOUR < 0) {
-      tft.print ("0");
+    if (FEED1_HOUR < 10) {
+      tft.print ('0');
       tft.print(FEED1_HOUR);
     } else tft.print(FEED1_HOUR);
     tft.print(":");
-    if (FEED1_MINUTE < 0) {
-      tft.print ("0");
+    if (FEED1_MINUTE < 10) {
+      tft.print ('0');
       tft.print(FEED1_MINUTE);
     } else
       tft.print(FEED1_MINUTE);
     tft.print(" & ");
-    if (FEED2_HOUR < 0) {
-      tft.print ("0");
+    if (FEED2_HOUR < 10) {
+      tft.print ('0');
       tft.print(FEED2_HOUR);
     } else tft.print(FEED2_HOUR);
     tft.print(":");
-    if (FEED2_MINUTE < 0) {
-      tft.print ("0");
+    if (FEED2_MINUTE < 10) {
+      tft.print ('0');
       tft.print(FEED2_MINUTE);
     } else
       tft.print(FEED2_MINUTE);
@@ -886,16 +886,17 @@ void FeedingStatus() {
   }
   else if (hasDosedFood1 == true && hasDosedFood2 == false) {
     Feed1Complete ();
+    tft.setTextColor(YELLOW, BLACK);
     tft.setTextSize(2);
     tft.setCursor(0, 180);
     tft.println("System will feed at ");
-    if (FEED2_HOUR < 0) {
-      tft.print ("0");
+    if (FEED2_HOUR < 10) {
+      tft.print ('0');
       tft.print(FEED2_HOUR);
     } else tft.print(FEED2_HOUR);
     tft.print(":");
-    if (FEED2_MINUTE < 0) {
-      tft.print ("0");
+    if (FEED2_MINUTE < 10) {
+      tft.print ('0');
       tft.print(FEED2_MINUTE);
     } else
       tft.print(FEED2_MINUTE);
@@ -905,32 +906,32 @@ void FeedingStatus() {
   Feed1_count ;
   Feed1_day = now.day();
   Feed1_month = now.month();
-  
+
   //ΔΕΥΤΕΡΟ ΤΑΙΣΜΑ
   Feed2_count ;
   Feed2_day = now.day();
   Feed2_month = now.month();
-  
+
   //ΕΝΕΡΓΟΠΟΙΗΣΗ ΠΡΩΤΟΥ ΤΑΙΣΜΑΤΟΣ
-  
+
   if (now.hour() == FEED1_HOUR && now.minute() == FEED1_MINUTE && hasDosedFood1 == false) {
-  
+
     hasDosedFood1 = true;
     Food1_ON();
     Serial.println("Feeding1 ON");
-  
+
   }  else  {
     Food1_OFF();
   }
-  
+
   //ΕΝΕΡΓΟΠΟΙΗΣΗ ΔΕΥΤΕΡΟΥ ΤΑΙΣΜΑΤΟΣ
-  
+
   if (now.hour() == FEED2_HOUR && now.minute() == FEED2_MINUTE && hasDosedFood2 == false) {
-  
+
     hasDosedFood2 = true;
     Food2_ON();
     Serial.println("Feeding2 ON");
-  
+
   }  else {
     Food2_OFF();
   }
