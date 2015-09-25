@@ -596,13 +596,13 @@ void DosingStatus() {
     tft.setCursor(0, 100);
     tft.println("System will dose");
     tft.print("Micros at ");
-    if (MICRO_HOUR < 0) {
-      tft.print ("0");
+    if (MICRO_HOUR < 10) {
+      tft.print ('0');
       tft.print(MICRO_HOUR);
     } else tft.print(MICRO_HOUR);
     tft.print(":");
-    if (MICRO_MINUTE < 0) {
-      tft.print ("0");
+    if (MICRO_MINUTE < 10) {
+      tft.print ('0');
       tft.print(MICRO_MINUTE);
     } else
       tft.print(MICRO_MINUTE);
@@ -616,13 +616,13 @@ void DosingStatus() {
     tft.setCursor(0, 150);
     tft.println("System will dose");
     tft.print("Kalio at ");
-    if (KALIO_HOUR < 0) {
-      tft.print ("0");
+    if (KALIO_HOUR < 10) {
+      tft.print ('0');
       tft.print(KALIO_HOUR);
     } else tft.print(KALIO_HOUR);
     tft.print(":");
-    if (KALIO_MINUTE < 0) {
-      tft.print ("0");
+    if (KALIO_MINUTE < 10) {
+      tft.print ('0');
       tft.print(KALIO_HOUR);
     } else
       tft.print(KALIO_MINUTE);
@@ -635,13 +635,13 @@ void DosingStatus() {
     tft.setCursor(0, 195);
     tft.println("System will dose");
     tft.print("EXELL at ");
-    if (EXELL_HOUR < 0) {
-      tft.print ("0");
+    if (EXELL_HOUR < 10) {
+      tft.print ('0');
       tft.print(EXELL_HOUR);
     } else tft.print(EXELL_HOUR);
     tft.print(":");
     if (EXELL_MINUTE < 0) {
-      tft.print ("0");
+      tft.print ('0');
       tft.print(EXELL_HOUR);
     } else
       tft.print(EXELL_MINUTE);
