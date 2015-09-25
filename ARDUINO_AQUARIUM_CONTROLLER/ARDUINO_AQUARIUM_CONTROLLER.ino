@@ -32,15 +32,15 @@ int T5_ON_HOUR = 12,
 //ΟΡΙΣΜΟΣ ΧΡΟΝΟΥ ΓΙΑ ΤΟ ΑΝΑΜΑ-ΣΒΗΣΙΜΟ Τ8 ΦΩΤΙΣΜΟΥ
 //
 int T8_ON_HOUR = 13,
-    T8_ON_MINUTE = 30,
+    T8_ON_MINUTE = 0,
     T8_OFF_HOUR = 22,
-    T8_OFF_MINUTE = 30;
+    T8_OFF_MINUTE = 0;
 
 //========================================================================================================================
 //ΟΡΙΣΜΟΣ ΧΡΟΝΟΥ ΓΙΑ ΤΟ ΑΝΑΜΑ-ΣΒΗΣΙΜΟ CO2
 //
 int CO2_ON_HOUR = 12,
-    CO2_ON_MINUTE = 30,
+    CO2_ON_MINUTE = 0,
     CO2_OFF_HOUR = 21,
     CO2_OFF_MINUTE = 0;
 //========================================================================================================================
@@ -473,7 +473,7 @@ void T5LightsOFF() //SBHSIMO T5 LAMPES
   tft.setCursor(10, 125);
   tft.setTextSize(2);
   tft.setTextColor(YELLOW, BLACK);
-  tft.print ("will turn on at ");
+  tft.print ("Will turn on at ");
   tft.print (T5_ON_HOUR);
   tft.print (":00");
   Serial.println ("T5 lights are OFF");
@@ -541,7 +541,7 @@ void CO2_OFF() //SBHSIMO CO2
   tft.setCursor(10, 220);
   tft.setTextSize(2);
   tft.setTextColor(YELLOW, BLACK);
-  tft.print ("will turn on at ");
+  tft.print ("Will turn on at ");
   tft.print (CO2_ON_HOUR);
   tft.print (":00");
   Serial.println("CO2 is OFF");
@@ -550,18 +550,18 @@ void CO2_OFF() //SBHSIMO CO2
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΛΙΠΑΣΜΑΤΩΝ
 //
 int pump1_count = 0, //ΙΧΝΟΣΤΟΙΧΕΙΑ
-    MICRO_HOUR = 22,
-    MICRO_MINUTE = 53,
+    MICRO_HOUR = 13,
+    MICRO_MINUTE = 15,
     MICRO_SEC = 0;
 
 int pump2_count = 0,  //ΚΑΛΙΟ
-    KALIO_HOUR = 22,
-    KALIO_MINUTE = 53,
+    KALIO_HOUR = 13,
+    KALIO_MINUTE = 30,
     KALIO_SEC = 0;
 
 int pump3_count = 0,  //EXELL
-    EXELL_HOUR = 22,
-    EXELL_MINUTE = 54,
+    EXELL_HOUR = 13,
+    EXELL_MINUTE = 45,
     EXELL_SEC = 0;
 
 
@@ -842,12 +842,12 @@ void EXELLDosing_OFF() {
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΤΡΟΦΗΣ
 //
 
-int FEED1_HOUR = 22,
-    FEED1_MINUTE = 51,
+int FEED1_HOUR = 9,
+    FEED1_MINUTE = 0,
     FEED1_SEC = 0;
 
-int FEED2_HOUR = 22,
-    FEED2_MINUTE = 52,
+int FEED2_HOUR = 21,
+    FEED2_MINUTE = 0,
     FEED2_SEC = 0;
 
 void FeedingStatus() {
@@ -950,7 +950,7 @@ void Food1_ON() {
 
 void Feed1Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
-  tft.setTextSize(3);
+  tft.setTextSize(2);
   tft.setCursor(0, 100);
   tft.print("Fed ");
   tft.print(Feed1_count);
@@ -996,7 +996,7 @@ void Food2_ON() {
 
 void Feed2Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
-  tft.setTextSize(3);
+  tft.setTextSize(2);
   tft.setCursor(0, 180);
   tft.print("Fed ");
   tft.print(Feed2_count);
