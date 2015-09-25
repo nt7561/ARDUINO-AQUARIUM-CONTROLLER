@@ -489,7 +489,7 @@ void T8LightsON() //ANAMA T8 LAMPES
   tft.setCursor(10, 175);
   tft.setTextSize(2);
   tft.setTextColor(YELLOW, BLACK);
-  tft.print ("will turn off at ");
+  tft.print ("Will turn off at ");
   tft.print (T8_OFF_HOUR);
   tft.print (":00");
   Serial.println ("T8 lights are ON");
@@ -505,7 +505,7 @@ void T8LightsOFF() //SBHSIMO T5 LAMPES
   tft.setCursor(10, 175);
   tft.setTextSize(2);
   tft.setTextColor(YELLOW, BLACK);
-  tft.print ("will turn on at ");
+  tft.print ("Will turn on at ");
   tft.print (T8_ON_HOUR);
   tft.print (":00");
   Serial.println ("T8 lights are OFF");
@@ -525,7 +525,7 @@ void CO2_ON() //ANAMA CO2
   tft.setCursor(10, 220);
   tft.setTextSize(2);
   tft.setTextColor(YELLOW, BLACK);
-  tft.print ("will turn off at ");
+  tft.print ("Will turn off at ");
   tft.print (CO2_OFF_HOUR);
   tft.print (":00");
   Serial.println ("CO2 in ON");
@@ -550,18 +550,18 @@ void CO2_OFF() //SBHSIMO CO2
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΛΙΠΑΣΜΑΤΩΝ
 //
 int pump1_count = 0, //ΙΧΝΟΣΤΟΙΧΕΙΑ
-    MICRO_HOUR = 13,
-    MICRO_MINUTE = 10,
+    MICRO_HOUR = 22,
+    MICRO_MINUTE = 46,
     MICRO_SEC = 0;
 
 int pump2_count = 0,  //ΚΑΛΙΟ
-    KALIO_HOUR = 13,
-    KALIO_MINUTE = 20,
+    KALIO_HOUR = 22,
+    KALIO_MINUTE = 48,
     KALIO_SEC = 0;
 
 int pump3_count = 0,  //EXELL
-    EXELL_HOUR = 13,
-    EXELL_MINUTE = 25,
+    EXELL_HOUR = 22,
+    EXELL_MINUTE = 49,
     EXELL_SEC = 0;
 
 
@@ -726,7 +726,7 @@ void MicroDosingComplete() {
   tft.print(pump1_count);
   tft.println(" time(s) on ");
   tft.print(pump_day_1);
-  tft.print(" / ");
+  tft.print("/");
   tft.print(pump_month_1);
   tft.print(" ");
   if (time1_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
@@ -734,7 +734,7 @@ void MicroDosingComplete() {
     tft.print(time1_H);
   } else
     tft.print(time1_H);
-  tft.print(": ");
+  tft.print(":");
   if (time1_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
     tft.print ('0');
     tft.print(time1_M);
@@ -771,19 +771,19 @@ void KalioDosingComplete() {
   tft.print(pump2_count);
   tft.println(" time(s) on ");
   tft.print(pump_day_2);
-  tft.print(" / ");
+  tft.print("/");
   tft.print(pump_month_2);
   tft.print(" ");
   if (time2_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
     tft.print ('0');
     tft.print(time2_H);
   } else tft.print(time2_H);
-  tft.print(": ");
+  tft.print(":");
   if (time2_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
     tft.print ('0');
     tft.print(time2_M);
   } else  tft.print(time2_M);
-  tft.print(": ");
+  tft.print(":");
   if (time2_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
     tft.print ('0');
     tft.print(time2_S);
@@ -814,19 +814,19 @@ void ExellDosingComplete() {
   tft.print(pump3_count);
   tft.println(" time(s) on ");
   tft.print(pump_day_3);
-  tft.print(" / ");
+  tft.print("/");
   tft.print(pump_month_3);
   tft.print(" ");
   if (time3_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
     tft.print ('0');
     tft.print(time3_H);
   } else tft.print(time3_H);
-  tft.print(": ");
+  tft.print(":");
   if (time3_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
     tft.print ('0');
     tft.print(time3_M);
   } else tft.print(time3_M);
-  tft.print(": ");
+  tft.print(":");
   if (time3_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
     tft.print ('0');
     tft.println(time3_S);
@@ -842,12 +842,12 @@ void EXELLDosing_OFF() {
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΤΡΟΦΗΣ
 //
 
-int FEED1_HOUR = 14,
-    FEED1_MINUTE = 15,
+int FEED1_HOUR = 22,
+    FEED1_MINUTE = 45,
     FEED1_SEC = 0;
 
-int FEED2_HOUR = 14,
-    FEED2_MINUTE = 20,
+int FEED2_HOUR = 22,
+    FEED2_MINUTE = 47,
     FEED2_SEC = 0;
 
 void FeedingStatus() {
@@ -855,7 +855,7 @@ void FeedingStatus() {
   if (hasDosedFood1 == false && hasDosedFood2 == false) {
 
     tft.setTextColor(YELLOW, BLACK); //set color for DOSING
-    tft.setTextSize(2);
+    tft.setTextSize(3);
     tft.setCursor(0, 100);
     tft.println("System will feed at ");
     if (FEED1_HOUR < 0) {
@@ -886,7 +886,8 @@ void FeedingStatus() {
   }
   else if (hasDosedFood1 == true && hasDosedFood2 == false) {
     Feed1Complete ();
-    tft.setCursor(0, 150);
+    tft.setTextSize(3);
+    tft.setCursor(0, 180);
     tft.println("System will feed at ");
     if (FEED2_HOUR < 0) {
       tft.print ("0");
@@ -949,13 +950,13 @@ void Food1_ON() {
 
 void Feed1Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
-  tft.setTextSize(2);
+  tft.setTextSize(3);
   tft.setCursor(0, 100);
   tft.print("Fed fish ");
   tft.print(Feed1_count);
   tft.println(" time(s) on ");
   tft.print(Feed1_day);
-  tft.print(" / ");
+  tft.print("/");
   tft.print(Feed1_month);
   tft.print(" ");
   if (Feedtime1_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
@@ -963,13 +964,13 @@ void Feed1Complete() {
     tft.print(Feedtime1_H);
   } else
     tft.print(Feedtime1_H);
-  tft.print(": ");
+  tft.print(":");
   if (Feedtime1_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
     tft.print ('0');
     tft.print(Feedtime1_M);
   } else
     tft.print(Feedtime1_M);
-  tft.print(": ");
+  tft.print(":");
   if (Feedtime1_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
     tft.print ('0');
     tft.print(Feedtime1_S);
@@ -995,13 +996,13 @@ void Food2_ON() {
 
 void Feed2Complete() {
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
-  tft.setTextSize(2);
-  tft.setCursor(0, 100);
+  tft.setTextSize(3);
+  tft.setCursor(0, 180);
   tft.print("Fed fish ");
   tft.print(Feed2_count);
   tft.println(" time(s) on ");
   tft.print(Feed2_day);
-  tft.print(" / ");
+  tft.print("/");
   tft.print(Feed2_month);
   tft.print(" ");
   if (Feedtime2_H < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
@@ -1009,13 +1010,13 @@ void Feed2Complete() {
     tft.print(Feedtime2_H);
   } else
     tft.print(Feedtime2_H);
-  tft.print(": ");
+  tft.print(":");
   if (Feedtime2_M < 10) { //PRINT A 0 IN FRONT OF MINUTES IF LESS THAN 10
     tft.print ('0');
     tft.print(Feedtime2_M);
   } else
     tft.print(Feedtime2_M);
-  tft.print(": ");
+  tft.print(":");
   if (Feedtime2_S < 10) {//PRINT A 0 IN FRONT OF SECONDS IF LESS THAN 10
     tft.print ('0');
     tft.print(Feedtime2_S);
