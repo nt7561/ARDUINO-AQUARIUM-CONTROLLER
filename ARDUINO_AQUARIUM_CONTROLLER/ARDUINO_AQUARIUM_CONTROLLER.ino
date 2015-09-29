@@ -4,7 +4,7 @@
 // ΤΟ ΕΠΟΜΕΝΟ ΣΤΑΔΙΟ ΘΑ ΕΙΝΑΙ Η ΔΗΜΙΟΥΡΓΕΙΑ ΤΗΣ ΛΕΙΤΟΥΡΓΕΙΑΣ ΚΑΙ ΤΟΥ ΑΥΤΟΜΑΤΟΥ ΤΑΙΣΜΑΤΟΣ ΤΩΝ ΨΑΡΙΩΝ  ΚΑΘΩΣ ΚΑΙ ΕΝΑ WEB BASED LOG ΠΡΟΚΕΙΜΕΝΟΥ ΝΑ ΜΠΟΡΕΙ ΚΑΠΟΙΟΣ ΝΑ ΔΕΙ ΑΠΟΜΑΚΡΥΣΜΕΝΑ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΕΝΥΔΡΕΙΟΥ
 
 
-
+#include <UTFT.h>
 #include <SPFD5408_Adafruit_GFX.h>    // Core graphics library
 #include <SPFD5408_Adafruit_TFTLCD.h> // Hardware-specific library
 #include <SPFD5408_TouchScreen.h>
@@ -18,6 +18,10 @@
 //#include <DateTime.h>
 //#include <DateTimeStrings.h>
 
+// Declare which fonts we will be using
+extern uint8_t SmallFont[];
+extern uint8_t BigFont[];
+extern uint8_t SevenSegNumFont[];
 
 
 //========================================================================================================================
@@ -79,7 +83,7 @@ int time3_S;                 //for LCD to Print the Seconds Pump ran
 //
 // ΠΡΩΤΟ ΤΑΙΣΜΑ
 int Feed1_count = 0;
-int Feed1_delay = 7157; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
+int Feed1_delay = 7150; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
 int Feed1_month;           //for LCD to Print the Month Pump ran
 int Feed1_day;             //for LCD to Print the Date Pump ran
 int Feedtime1_H;               //for LCD to Print the Time Pump ran
@@ -89,7 +93,7 @@ int Feedtime1_S;
 
 // ΔΕΥΤΕΡΟ ΤΑΙΣΜΑ
 int Feed2_count = 0;
-int Feed2_delay = 7157; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
+int Feed2_delay = 7150; //  ΜΙΑ ΠΛΗΡΗΣ ΠΕΡΙΣΤΡΟΦΗ
 int Feed2_month;           //for LCD to Print the Month Pump ran
 int Feed2_day;             //for LCD to Print the Date Pump ran
 int Feedtime2_H;               //for LCD to Print the Time Pump ran
@@ -109,16 +113,26 @@ int Feedtime2_S;                 //for LCD to Print the Seconds Pump ran
 //========================================================================================================================
 //ΟΡΙΣΜΟΣ ΧΡΩΜΑΤΩΝ
 //
-#define BLACK   0x0000
-#define BLUE    0x001F
-#define RED     0xF800
-#define GREEN   0x07E0
-#define CYAN    0x07FF
-#define MAGENTA 0xF81F
-#define YELLOW  0xFFE0
-#define WHITE   0xFFFF
+#define VGA_BLACK    0x0000
+#define VGA_WHITE   0xFFFF
+#define VGA_RED     0xF800
+#define VGA_GREEN   0x0400
+#define VGA_BLUE    0x001F
+#define VGA_SILVER    0xC618
+#define VGA_GRAY    0x8410
+#define VGA_MAROON    0x8000
+#define VGA_YELLOW    0xFFE0
+#define VGA_OLIVE   0x8400
+#define VGA_LIME    0x07E0
+#define VGA_AQUA    0x07FF
+#define VGA_TEAL    0x0410
+#define VGA_NAVY    0x0010
+#define VGA_FUCHSIA   0xF81F
+#define VGA_PURPLE    0x8010
 
-Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+UTFT myGLCD(SSD1963_480, 38, 39, 40, 41);
+//Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 RTC_DS1307 RTC;
 
@@ -133,6 +147,12 @@ DallasTemperature sensors(&oneWire);
 
 //temp sensor unique addresses
 DeviceAddress WaterThermometer = {0x28, 0xFF, 0xE0, 0xAD, 0x62, 0x15, 0x03, 0xBD};
+
+int  resolution = 12;
+unsigned long lastTempRequest = 0;
+int  delayInMillis = 0;
+float temperature = 0.0;
+int  idle = 0;
 
 //========================================================================================================================
 // ΟΡΙΣΜΟΣ PIN Relay Board
@@ -165,31 +185,39 @@ void setup() {
   RTC.begin();
   // Start up the library for temp sensor
   sensors.begin(); // IC Default 9 bit. If you have troubles consider upping it 12. Ups the delay giving the IC more time to process the temperature measurement
-  sensors.setResolution(WaterThermometer, 9);
-  tft.begin(0x9341); // SDFP5408
-  tft.fillScreen(BLACK); // Clear screen
-  tft.setRotation(1); // screen orientation
-  while (!Serial) ; // wait until Arduino Serial Monitor opens
-  tft.setTextSize(2);
-  tft.println("    Waiting 10 seconds ");
-  tft.print("for RTC  to  Sync.... ");
-  delay(10000);//wait for RTC to Respond, if not set time
-  tft.print("DONE");
-  delay(2000);
-  tft.fillScreen(BLACK); // Clear screen
+  sensors.setResolution(WaterThermometer, resolution);
+  // TEMPERATURE MODIFICATION
+  sensors.setWaitForConversion(false);
+  sensors.requestTemperatures();
+  delayInMillis = 750 / (1 << (12 - resolution));
+  lastTempRequest = millis();
+  pinMode(13, OUTPUT);
 
-  tft.setCursor(60, 60);
-  tft.setTextSize(3);
-  tft.println("WELCOME TO");
-  tft.setCursor(60, 90);
-  tft.setTextSize(3);
-  tft.println(" AQUARIUM ");
-  tft.setCursor(60, 120);
-  tft.setTextSize(3);
-  tft.println("CONTROLLER");
+  //========================================================================================================================
+  //ΕΚΚΙΝΗΣΗ ΟΘΟΝΗΣ
+  //
+  myGLCD.InitLCD(LANDSCAPE);
+  myGLCD.clrScr();
+  //tft.begin(0x9341); // SDFP5408
+  //tft.fillScreen(BLACK); // Clear screen
+  //tft.setRotation(1); // screen orientation
+  while (!Serial) ; // wait until Arduino Serial Monitor opens
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_BLACK);
+  myGLCD.setColor(VGA_WHITE);
+  myGLCD.print("Waiting 10 seconds for RTC to Sync....", CENTER, 10);
+  /*tft.setTextSize(2);
+  tft.println("    Waiting 10 seconds ");
+  tft.print("for RTC  to  Sync.... ");*/
+  delay(10000);//wait for RTC to Respond, if not set time
+  myGLCD.print("DONE", CENTER, 26);
+  delay(2000);
+  myGLCD.clrScr(); // Clear screen
+
+  myGLCD.print("WELCOME TO AQUARIUM CONTROLLER", CENTER, 100);
 
   delay(3000);
-  tft.fillScreen(BLACK); // Clear screen
+  myGLCD.clrScr(); // Clear screen
 
   //-------( Initialize Pins so relays are inactive at reset)----
   digitalWrite(RelayT8Lights, 0 );
@@ -215,6 +243,7 @@ void setup() {
   delay(2000); //Check that all relay
 
 
+
   prevRefresh = RTC.now();
 
 }// end setup
@@ -233,37 +262,68 @@ void  loop() {
   DateTime now =  RTC.now();    //Get the date and time from RTC
   sensors.requestTemperatures(); // Send the command to get temperatures
   CurrentTemp  = sensors.getTempCByIndex(0);
+  //========================================================================================================================
+  //TEMPERAURE MODIFICATION
+  //
+  if (millis() - lastTempRequest >= delayInMillis) // waited long enough??
+  {
+    digitalWrite(13, LOW);
+    Serial.print(" Temperature: ");
+    temperature = sensors.getTempCByIndex(0);
+    Serial.println(temperature, resolution - 8);
+    Serial.print("  Resolution: ");
+    Serial.println(resolution);
+    Serial.print("Idle counter: ");
+    Serial.println(idle);
+    Serial.println();
 
+    idle = 0;
+
+    // immediately after fetching the temperature we request a new sample
+    // in the async modus
+    // for the demo we let the resolution change to show differences
+    resolution++;
+    if (resolution > 12) resolution = 9;
+
+    sensors.setResolution(WaterThermometer, resolution);
+    sensors.requestTemperatures();
+    delayInMillis = 750 / (1 << (12 - resolution));
+    lastTempRequest = millis();
+  }
+
+  digitalWrite(13, HIGH);
+  // we can do usefull things here
+  // for the demo we just count the idle time in millis
+  delay(1);
+  idle++;
 
   if ((nextMinute == now.minute() && nextSecond <= now.second())
       || isFirst == true)
   {
     Serial.println(" [ Will refresh screen ] ");
-    tft.fillScreen(BLACK);
+    myGLCD.clrScr(); // Clear screen
     isFirst = false;
 
     digitalDateTimeDisplay (); //ΕΜΦΑΝΙΣΗ ΗΜΕΡΟΜΗΝΙΑΣ-ΩΡΑΣ
+    digitalTempDisplay (); // ΕΜΦΑΝΙΣΗ ΘΕΡΜΟΚΡΑΣΙΑΣ
     if (loopCounter == 0)
-    {
-      digitalTempDisplay (); // ΕΜΦΑΝΙΣΗ ΘΕΡΜΟΚΡΑΣΙΑΣ
-    }
-    else if (loopCounter == 1)
     {
       T5_T8_CO2Status(); // ΕΛΕΓΧΟΣ ΚΑΤΑΣΤΑΣΗΣ ΦΩΤΩΝ-CO2;
     }
-    else if (loopCounter == 2)
+    else if (loopCounter == 1)
     {
       DosingStatus (); // ΕΛΕΓΧΟΣ ΚΑΤΑΣΤΑΣΗΣ ΛΙΠΑΝΣΗΣ
     }
-    else if (loopCounter == 3)
+    else if (loopCounter == 2)
     {
       FeedingStatus (); // ΕΛΕΓΧΟΣ ΚΑΤΑΣΤΑΣΗΣ ΛΙΠΑΝΣΗΣ
     }
 
-    if (loopCounter >= 3)  loopCounter = 0;
+
+    if (loopCounter >= 2)  loopCounter = 0;
     else                  loopCounter++;
 
-    if (now.second() + 7 >= 60)
+    if (now.second() + 5 >= 60)
       nextMinute = (now.minute() + 1) % 60;
     else
       nextMinute = now.minute();
@@ -293,36 +353,15 @@ void  loop() {
 //
 void digitalDateTimeDisplay () {
   DateTime now = RTC.now(); //GRAB DATE AND TIME FROM RTC
-  tft.setTextColor(YELLOW, BLACK); //set text color & size for  DATE coming from TinyRTC
-  tft.setTextSize(4);
-  tft.setCursor(50, 5); //tft.setCursor(0, 35);
-  tft.print(now.day(), DEC);
-  tft.print('/');
-  tft.print(now.month(), DEC);
-  tft.print('/');
-  tft.print(now.year(), DEC);
-  tft.println(' ');
-  tft.setCursor(95, 50);
-  tft.setTextColor(YELLOW, BLACK); //set color for TIME
-  tft.setTextSize(4);//set text  size for  TIME coming from TinyRTC
-  if (now.hour() < 10) {//PRINT A 0 IN FRONT OF HOUR IF LESS THAN 10
-    tft.print ('0');
-    tft.print(now.hour(), DEC);
-  }
-  else {
-    tft.print(now.hour(), DEC);
-  }
-  tft.print(':');
-  if (now.minute() < 10) { //PRINT A 0 IN FRONT OF THE MINUTE IF LESS THAN 10
-    tft.print('0');
-    tft.print(now.minute(), DEC);
-  }
-  else {
-    tft.println(now.minute(), DEC);
-    tft.setTextColor(YELLOW, BLACK);
-    tft.setTextSize(2);
-    tft.print("__________________________");
-  }
+
+  char buffer [25] = "";
+
+  sprintf(buffer, "%02d/%02d/%04d, %02d:%02d:%02d\0", now.day(), now.month(), now.year(), now.hour(), now.minute(), now.second());
+
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_BLACK);
+  myGLCD.setColor(VGA_YELLOW);
+  myGLCD.print(buffer, LEFT, 1);
 
 }
 //========================================================================================================================
@@ -330,34 +369,37 @@ void digitalDateTimeDisplay () {
 //
 void digitalTempDisplay ()
 {
+  char buffer [4] = "";
+  sprintf(buffer, "%.2lf", sensors.getTempCByIndex(0));
+
   if (CurrentTemp > HighestTemp) {  //ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΝΑ ΦΑΙΝΕΤΑΙ ΤΟ ΧΡΩΜΑ ΤΗΣ ΘΕΡΜΟΚΡΑΣΙΑΣ ΔΙΑΦΟΡΕΤΙΚΟ ΑΝΑΛΟΓΑ ΜΕ ΤΟ ΕΥΡΟΣ ΤΗΣ
-    tft.setCursor(15, 110); //tft.setCursor(5, 70);
-    tft.setTextColor(RED, BLACK);
-    tft.setTextSize(3);
-    tft.print("Water Temp:");
-    tft.setTextSize(3);
-    tft.println(sensors.getTempCByIndex(0));
+    myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("Water Temp:" , RIGHT, 1);
+    myGLCD.setBackColor(VGA_RED);
+    myGLCD.setFont(SevenSegNumFont);
+    myGLCD.print(buffer, RIGHT, 20);
     HeaterOFF ();
     FunsON ();
   }
   else if (CurrentTemp < LowestTemp)
   {
-    tft.setCursor(15, 110); //tft.setCursor(5, 70);
-    tft.setTextColor(CYAN, BLACK); //set color for TEMP
-    tft.setTextSize(3);
-    tft.print("Water Temp:");
-    tft.setTextSize(3);
-    tft.println(sensors.getTempCByIndex(0));
+    myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("Water Temp:" , RIGHT, 1);
+    myGLCD.setBackColor(VGA_LIME);
+    myGLCD.setFont(SevenSegNumFont);
+    myGLCD.print(buffer, RIGHT, 20);
     HeaterON();
     FunsOFF();
   }
   else {
-    tft.setCursor(15, 110); //tft.setCursor(5, 70);
-    tft.setTextColor(GREEN, BLACK); //set color for TEMP
-    tft.setTextSize(3);
-    tft.print("Water Temp:");
-    tft.setTextSize(3);
-    tft.println(sensors.getTempCByIndex(0));
+    myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("Water Temp:" , RIGHT, 1);
+    myGLCD.setBackColor(VGA_GREEN);
+    myGLCD.setFont(SevenSegNumFont);
+    myGLCD.print(buffer, RIGHT, 20);
     HeaterOFF ();
     FunsOFF ();
   }
@@ -368,10 +410,13 @@ void digitalTempDisplay ()
 void HeaterON()
 {
   digitalWrite(RelayHeater, 1);
-  tft.setCursor(50, 150); //tft.setCursor(85, 170);
-  tft.setTextColor(GREEN, BLACK); //set color for DOSING
-  tft.setTextSize(3);
-  tft.print ("Heater is ON!");
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("HEATER ON" , RIGHT, 60);
+  //tft.setCursor(50, 150); //tft.setCursor(85, 170);
+  //tft.setTextColor(GREEN, BLACK); //set color for DOSING
+  //tft.setTextSize(3);
+  //tft.print ("Heater is ON!");
 }
 //========================================================================================================================
 //ΣΒΗΣΙΜΟ ΘΕΡΜΟΣΤΑΤΗ
@@ -379,10 +424,13 @@ void HeaterON()
 void HeaterOFF()
 {
   digitalWrite(RelayHeater, 0);
-  tft.setCursor(50, 150); //tft.setCursor(85, 170);
+  /*tft.setCursor(50, 150); //tft.setCursor(85, 170);
   tft.setTextColor(RED, BLACK); //set color for DOSING
   tft.setTextSize(3);
-  tft.print ("Heater is OFF");
+  tft.print ("Heater is OFF");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_RED);
+  myGLCD.print("HEATER OFF" , RIGHT, 60);
 }
 //========================================================================================================================
 //ΑΝΑΜΑ ΑΝΕΜΙΣΤΗΡΩΝ
@@ -390,10 +438,13 @@ void HeaterOFF()
 void FunsON ()
 {
   digitalWrite(RelayFuns, 1);
-  tft.setCursor(50, 190); //tft.setCursor(85, 190);
+  /*tft.setCursor(50, 190); //tft.setCursor(85, 190);
   tft.setTextColor(GREEN, BLACK); //set color for DOSING
   tft.setTextSize(3);
-  tft.print ("Funs are ON!");
+  tft.print ("Funs are ON!");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("FUNS ON" , RIGHT, 80);
 }
 //========================================================================================================================
 //ΣΒΥΣΙΜΟ ΑΝΕΜΙΣΤΗΡΩΝ
@@ -401,10 +452,14 @@ void FunsON ()
 void FunsOFF()
 {
   digitalWrite(RelayFuns, 0);
-  tft.setCursor(50, 190); //tft.setCursor(85, 190);
+  /*tft.setCursor(50, 190); //tft.setCursor(85, 190);
   tft.setTextColor(RED, BLACK); //set color for DOSING
   tft.setTextSize(3);
-  tft.print ("Funs are OFF");
+  tft.print ("Funs are OFF");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_RED);
+  myGLCD.print("FUNS ON" , RIGHT, 80);
+
 }
 void T5_T8_CO2Status() {
   DateTime now = RTC.now();
@@ -450,7 +505,16 @@ void T5_T8_CO2Status() {
 void T5LightsON()
 {
   digitalWrite(RelayT5Lights, 1);
-  tft.setCursor(10, 100);
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("T5 LIGHTS ARE ON" , LEFT, 70);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN OFF AT:" , LEFT, 90);
+  myGLCD.print("T5_OFF_HOUR", LEFT, 106);
+
+
+
+  /*tft.setCursor(10, 100);
   tft.setTextColor(GREEN, BLACK); //set color for TIME ON
   tft.setTextSize(3);//set text  size
   tft.print ("T5 lights are ON");
@@ -460,13 +524,13 @@ void T5LightsON()
   tft.print ("will turn off at ");
   tft.print (T5_OFF_HOUR);
   tft.print (":00");
-  Serial.println ("T5 lights are ON");
+  Serial.println ("T5 lights are ON");*/
 }
 
 void T5LightsOFF() //SBHSIMO T5 LAMPES
 {
   digitalWrite(RelayT5Lights, 0);
-  tft.setCursor(10, 100);
+  /*tft.setCursor(10, 100);
   tft.setTextColor(RED, BLACK); //set color for TIME OFF
   tft.setTextSize(3);
   tft.print("T5 lights are OFF");
@@ -476,13 +540,20 @@ void T5LightsOFF() //SBHSIMO T5 LAMPES
   tft.print ("Will turn on at ");
   tft.print (T5_ON_HOUR);
   tft.print (":00");
-  Serial.println ("T5 lights are OFF");
+  Serial.println ("T5 lights are OFF");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("T5 LIGHTS ARE OFF" , LEFT, 70);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN ON AT:" , LEFT, 90);
+  myGLCD.print("T8_OFF_HOUR", LEFT, 106);
+
 }
 
 void T8LightsON() //ANAMA T8 LAMPES
 {
   digitalWrite(RelayT8Lights, 1);
-  tft.setCursor(10, 145);
+  /*tft.setCursor(10, 145);
   tft.setTextColor(GREEN, BLACK); //set color for TIME ON
   tft.setTextSize(3);//set text  size
   tft.print ("T8 lights are ON");
@@ -492,13 +563,19 @@ void T8LightsON() //ANAMA T8 LAMPES
   tft.print ("Will turn off at ");
   tft.print (T8_OFF_HOUR);
   tft.print (":00");
-  Serial.println ("T8 lights are ON");
+  Serial.println ("T8 lights are ON");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("T8 LIGHTS ARE ON" , LEFT, 110);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN OFF AT:" , LEFT, 130);
+  myGLCD.print("T8_OFF_HOUR", LEFT, 146);
 }
 
 void T8LightsOFF() //SBHSIMO T5 LAMPES
 {
   digitalWrite(RelayT8Lights, 0);
-  tft.setCursor(10, 145);
+  /*tft.setCursor(10, 145);
   tft.setTextColor(RED, BLACK); //set color for TIME OFF
   tft.setTextSize(3);
   tft.print ("T8 lights are OFF");
@@ -508,7 +585,14 @@ void T8LightsOFF() //SBHSIMO T5 LAMPES
   tft.print ("Will turn on at ");
   tft.print (T8_ON_HOUR);
   tft.print (":00");
-  Serial.println ("T8 lights are OFF");
+  Serial.println ("T8 lights are OFF");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("T8 LIGHTS ARE OFF" , LEFT, 110);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN ON AT:" , LEFT, 130);
+  myGLCD.print("T8_ON_HOUR", LEFT, 146);
+
 }
 
 //========================================================================================================================
@@ -518,7 +602,7 @@ void T8LightsOFF() //SBHSIMO T5 LAMPES
 void CO2_ON() //ANAMA CO2
 {
   digitalWrite(RelayCO2, 1);
-  tft.setCursor(10, 195);
+  /*tft.setCursor(10, 195);
   tft.setTextColor(GREEN, BLACK); //set color for TIME ON
   tft.setTextSize(3);//set text  size
   tft.print ("CO2 is ON");
@@ -528,13 +612,20 @@ void CO2_ON() //ANAMA CO2
   tft.print ("Will turn off at ");
   tft.print (CO2_OFF_HOUR);
   tft.print (":00");
-  Serial.println ("CO2 in ON");
+  Serial.println ("CO2 in ON");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("CO2 IS ON" , LEFT, 150);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN OFF AT:" , LEFT, 170);
+  myGLCD.print("CO2_OFF_HOUR", LEFT, 186);
+
 }
 
 void CO2_OFF() //SBHSIMO CO2
 {
   digitalWrite(RelayCO2, 0);
-  tft.setCursor(10, 195);
+  /*tft.setCursor(10, 195);
   tft.setTextColor(RED, BLACK); //set color for TIME OFF
   tft.setTextSize(3);
   tft.print ("CO2 is OFF");
@@ -544,7 +635,14 @@ void CO2_OFF() //SBHSIMO CO2
   tft.print ("Will turn on at ");
   tft.print (CO2_ON_HOUR);
   tft.print (":00");
-  Serial.println("CO2 is OFF");
+  Serial.println("CO2 is OFF");*/
+  myGLCD.setFont(BigFont);
+  myGLCD.setBackColor(VGA_GREEN);
+  myGLCD.print("CO2 IS OFF" , LEFT, 150);
+  myGLCD.setBackColor(VGA_YELLOW);
+  myGLCD.print("WILL TURN ON AT:" , LEFT, 170);
+  myGLCD.print("CO2_OFF_HOUR", LEFT, 186);
+
 }
 //========================================================================================================================
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΛΙΠΑΣΜΑΤΩΝ
@@ -591,7 +689,12 @@ void DosingStatus() {
   DateTime now = RTC.now();
   if (hasDosedMicros == false) {
 
-    tft.setTextColor(YELLOW, BLACK); //set color for DOSING
+    myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("SYSTEM WILL DOSE MICROS AT:" , LEFT, 70);
+    myGLCD.print("MICROS_HOUR", LEFT, 90);
+
+    /*tft.setTextColor(YELLOW, BLACK); //set color for DOSING
     tft.setTextSize(2);
     tft.setCursor(0, 100);
     tft.println("System will dose");
@@ -605,13 +708,18 @@ void DosingStatus() {
       tft.print ('0');
       tft.print(MICRO_MINUTE);
     } else
-      tft.print(MICRO_MINUTE);
+      tft.print(MICRO_MINUTE);*/
   } else if (hasDosedMicros == true ) {
     MicroDosingComplete();
   }
 
   if (hasDosedKalio == false) {
-    tft.setTextColor(YELLOW, BLACK); //set color for DOSING
+    myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("SYSTEM WILL DOSE KALIO AT:" , LEFT, 110);
+    myGLCD.print("KALIO_HOUR", LEFT, 130);
+
+    /*tft.setTextColor(YELLOW, BLACK); //set color for DOSING
     tft.setTextSize(2);
     tft.setCursor(0, 150);
     tft.println("System will dose");
@@ -625,12 +733,17 @@ void DosingStatus() {
       tft.print ('0');
       tft.print(KALIO_HOUR);
     } else
-      tft.print(KALIO_MINUTE);
+      tft.print(KALIO_MINUTE);*/
   } else if (hasDosedKalio == true) {
     KalioDosingComplete();
   }
   if (hasDosedEXELL == false) {
-    tft.setTextColor(YELLOW, BLACK); //set color for DOSING
+myGLCD.setFont(BigFont);
+    myGLCD.setBackColor(VGA_YELLOW);
+    myGLCD.print("SYSTEM WILL DOSE EXELL AT:" , LEFT, 150);
+    myGLCD.print("EXELL_HOUR", LEFT, 170);
+    
+    /*tft.setTextColor(YELLOW, BLACK); //set color for DOSING
     tft.setTextSize(2);
     tft.setCursor(0, 195);
     tft.println("System will dose");
@@ -644,7 +757,7 @@ void DosingStatus() {
       tft.print ('0');
       tft.print(EXELL_HOUR);
     } else
-      tft.print(EXELL_MINUTE);
+      tft.print(EXELL_MINUTE);*/
   } else if (hasDosedEXELL == true) {
     ExellDosingComplete();
   }
@@ -842,12 +955,12 @@ void EXELLDosing_OFF() {
 // ΩΡΕΣ ΧΟΡΗΓΗΣΗΣ ΤΡΟΦΗΣ
 //
 
-int FEED1_HOUR = 9,
-    FEED1_MINUTE = 10,
+int FEED1_HOUR = 6,
+    FEED1_MINUTE = 5,
     FEED1_SEC = 0;
 
 int FEED2_HOUR = 21,
-    FEED2_MINUTE = 10,
+    FEED2_MINUTE = 5,
     FEED2_SEC = 0;
 
 void FeedingStatus() {
